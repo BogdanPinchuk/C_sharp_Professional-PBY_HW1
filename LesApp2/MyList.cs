@@ -32,21 +32,38 @@ namespace LesApp2
         Student[] arrayS = new Student[4];
 
         /// <summary>
+        /// Змінні для свойств, які відображають кількість внесених елементів
+        /// </summary>
+        private int countR, countE, countS;
+
+        /// <summary>
         /// Кількість елементів внесених користувачем
         /// </summary>
         public int Count => CountR + CountE + CountS;
         /// <summary>
         /// Кількість внесених пенсіонерів
         /// </summary>
-        public int CountR { get; private set; }
+        public int CountR
+        {
+            get { return countR; }
+            private set { countR = value; }
+        }
         /// <summary>
         /// Кількість внесених робітників
         /// </summary>
-        public int CountE { get; private set; }
+        public int CountE
+        {
+            get { return countE; }
+            private set { countE = value; }
+        }
         /// <summary>
         /// Кількість внесених студентів
         /// </summary>
-        public int CountS { get; private set; }
+        public int CountS
+        {
+            get { return countS; }
+            private set { countS = value; }
+        }
 
         /// <summary>
         /// Ємність масиву громадян
@@ -69,7 +86,7 @@ namespace LesApp2
         /// <summary>
         /// Вихыд за межы масиву
         /// </summary>
-        string outOfRange = "\n\tСпроба вийти за межі масиву."
+        string outOfRange = "\n\tСпроба вийти за межі масиву.";
         #endregion
 
         /// <summary>
@@ -165,6 +182,28 @@ namespace LesApp2
                 return;
             }
 
+            // Оскільки за умовою в нас 3 види громадян то пофільтруємо них
+
+
+        }
+
+        /// <summary>
+        /// Присвоєння даних відповідному масиву
+        /// </summary>
+        /// <typeparam name="T">Тип даних</typeparam>
+        /// <param name="inputArray">Вхідний масив даних який необхідно внести</param>
+        /// <param name="baseArray">Внутрішній масив даних</param>
+        /// <param name="count">Кількість елементів базового масиву</param>
+        /// <param name="capacity">Ємність базового масиву</param>
+        private void ChangeArray<T>(T[] inputArray, ref T[] baseArray,
+            ref int count, int capacity)
+        {
+            // перевірка чи не пустий масив передається для присвоєння
+            if (inputArray.Length < 1)
+            {
+                return;
+            }
+
             #region вибір розміру масиву
             // в даному випадку для керування об'ємом масиву необхідно
             // розв'язати рівняння: capacity = 2^n > count
@@ -180,23 +219,19 @@ namespace LesApp2
 
             // розрахунок степіня двійки, який визначатиме ємність
             int power = (int)Math.Ceiling(
-                Math.Log(Count + items.Length) / Math.Log(2));
+                Math.Log(count + inputArray.Length) / Math.Log(2));
 
-            if (Count + items.Length >= Capacity)
+            if (Count + inputArray.Length >= Capacity)
             {
-                Resize((int)Math.Pow(2, power));
+                Resize<T>((int)Math.Pow(2, power), count, ref baseArray);
             }
 
-            // додавання нових авто
-            for (int i = 0; i < items.Length; i++)
+            // додавання нових елементів
+            for (int i = 0; i < inputArray.Length; i++)
             {
-                array[Count++] = items[i];
+                baseArray[count++] = inputArray[i];
             }
         }
-        
-
-
-
 
         /// <summary>
         /// Зміна розміру масиву
@@ -217,6 +252,9 @@ namespace LesApp2
             // змінна ссилки на новий масив
             array = temp;
         }
+
+
+
 
         /// <summary>
         /// Доступ до масиву по індексу
