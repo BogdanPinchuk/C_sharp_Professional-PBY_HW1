@@ -20,6 +20,32 @@ namespace LesApp2.People
         /// </summary>
         public string FullName { get; set; }
 
+        public override string ToString()
+            => "FullName: " + FullName + " ID: " + ID;
 
+        /// <summary>
+        /// Порівняння елементів
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(object obj)
+        {
+            var temp = obj as Citizen;
+
+            if (temp == null)
+            {
+                return false;
+            }
+
+            return this.ID == temp.ID &&
+                FullName == temp.FullName;
+        }
+
+        /// <summary>
+        /// Хеш-код екземпляру
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+            => ID ^ FullName.GetHashCode();
     }
 }

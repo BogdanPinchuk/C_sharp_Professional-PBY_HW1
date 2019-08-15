@@ -12,7 +12,7 @@ namespace LesApp2
     /// <summary>
     /// Непараметризована колекція
     /// </summary>
-    class MyList : IList<Citizen>, IEnumerable<Citizen>, IEnumerator<Citizen>
+    class MyList : IList<Citizen>, IEnumerable<Citizen>, IEnumerator<Citizen>, ICollection<Citizen>
     {
         /// <summary>
         /// Масив громадян спільний
@@ -168,35 +168,67 @@ namespace LesApp2
             }
         }
 
-
+        /// <summary>
+        /// Додавання одного елемента
+        /// </summary>
+        /// <param name="item"></param>
+        public void Add(Citizen item)
+            => AddRange(item);
 
         /// <summary>
         /// Додавання масиву елеменів
         /// </summary>
-        /// <param name="items">Масив вхідних елементів</param>
-        public void AddRange(params Citizen[] items)
+        /// <param name="data">Масив вхідних елементів</param>
+        public void AddRange(params Citizen[] data)
         {
             // перевірка чи не пусті вхідні параметри
-            if (items.Length < 1)
+            if (data.Length < 1)
             {
                 return;
             }
 
-            // Оскільки за умовою в нас 3 види громадян то пофільтруємо них
+            // Оскільки за умовою в нас 3 види громадян то пофільтруємо їх
 
+            // фільтр по пенсіонерам
+            Citizen[] filter = data.Where(t => t.GetType() == typeof(Retiree))
+                .Select(t => t).ToArray();
+            // заносимо дані в масив пенсіонерів
+            ChangeArray<Retiree>((Retiree[])filter, ref arrayR, ref countR);
+            // аналіз і зміна єсності за потребою
+            AnaliseSize<Citizen>(ref array, 0, CountR);
+            // заносимо дані в спільний масив
+            Array.Copy(arrayR, 0, array, 0, CountR);
 
+            // фільтр по робітникам
+            filter = data.Where(t => t.GetType() == typeof(Employee))
+                .Select(t => t).ToArray();
+            // заносимо дані в масив робітників
+            ChangeArray<Employee>((Employee[])filter, ref arrayE, ref countE);
+            // аналіз і зміна єсності за потребою
+            AnaliseSize<Citizen>(ref array, CountR, CountE);
+            // заносимо дані в спільний масив
+            Array.Copy(arrayE, 0, array, CountR, CountE);
+
+            // фільтр по студентам
+            filter = data.Where(t => t.GetType() == typeof(Student))
+                .Select(t => t).ToArray();
+            // заносимо дані в масив студентів
+            ChangeArray<Student>((Student[])filter, ref arrayS, ref countS);
+            // аналіз і зміна єсності за потребою
+            AnaliseSize<Citizen>(ref array, CountR + CountE, CountS);
+            // заносимо дані в спільний масив
+            Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
         }
 
         /// <summary>
         /// Присвоєння даних відповідному масиву
         /// </summary>
         /// <typeparam name="T">Тип даних</typeparam>
-        /// <param name="inputArray">Вхідний масив даних який необхідно внести</param>
+        /// <param name="inputArray">Вхідний масив даних, який необхідно внести</param>
         /// <param name="baseArray">Внутрішній масив даних</param>
         /// <param name="count">Кількість елементів базового масиву</param>
         /// <param name="capacity">Ємність базового масиву</param>
-        private void ChangeArray<T>(T[] inputArray, ref T[] baseArray,
-            ref int count, int capacity)
+        private void ChangeArray<T>(T[] inputArray, ref T[] baseArray, ref int count)
         {
             // перевірка чи не пустий масив передається для присвоєння
             if (inputArray.Length < 1)
@@ -204,27 +236,8 @@ namespace LesApp2
                 return;
             }
 
-            #region вибір розміру масиву
-            // в даному випадку для керування об'ємом масиву необхідно
-            // розв'язати рівняння: capacity = 2^n > count
-            // 2^n > count
-            // log_2(2^n) > log_2(count)
-            // n > log_2(count)
-            // n = ln(count) / ln(2)
-            // а так як передається певна кількість елементів length,
-            // які необхідно доадти в масив, то рівняння прийме вигляд
-            // n = ln(count + length) / ln(2)
-            // якщо count + length >= capacity то міняємо розмір
-            #endregion
-
-            // розрахунок степіня двійки, який визначатиме ємність
-            int power = (int)Math.Ceiling(
-                Math.Log(count + inputArray.Length) / Math.Log(2));
-
-            if (Count + inputArray.Length >= Capacity)
-            {
-                Resize<T>((int)Math.Pow(2, power), count, ref baseArray);
-            }
+            // аналіз розмірів і зміна ємності при необхідності
+            AnaliseSize<T>(ref baseArray, count, inputArray.Length);
 
             // додавання нових елементів
             for (int i = 0; i < inputArray.Length; i++)
@@ -253,8 +266,37 @@ namespace LesApp2
             array = temp;
         }
 
+        /// <summary>
+        /// Аналіз і зміна розмірів масивe за необхідністю
+        /// </summary>
+        /// <typeparam name="T">Тип елементів</typeparam>
+        /// <param name="array">вхідний масив</param>
+        /// <param name="ownCount">Кількість власних елементів</param>
+        /// <param name="newCount">Кількість вхідних нових елементів</param>
+        private void AnaliseSize<T>(ref T[] array, int ownCount, int newCount)
+        {
+            #region вибір розміру масиву
+            // в даному випадку для керування об'ємом масиву необхідно
+            // розв'язати рівняння: capacity = 2^n > count
+            // 2^n > count
+            // log_2(2^n) > log_2(count)
+            // n > log_2(count)
+            // n = ln(count) / ln(2)
+            // а так як передається певна кількість елементів length,
+            // які необхідно доадти в масив, то рівняння прийме вигляд
+            // n = ln(count + length) / ln(2)
+            // якщо count + length >= capacity то міняємо розмір
+            #endregion
 
+            // розрахунок степіня двійки, який визначатиме ємність
+            int power = (int)Math.Ceiling(
+                Math.Log(ownCount + newCount) / Math.Log(2));
 
+            if (ownCount + newCount >= array.Length)
+            {
+                Resize<T>((int)Math.Pow(2, power), ownCount, ref array);
+            }
+        }
 
         /// <summary>
         /// Доступ до масиву по індексу
@@ -285,41 +327,87 @@ namespace LesApp2
             }
         }
 
-        public void Add(Citizen item)
-        {
-            throw new NotImplementedException();
-        }
 
-        public bool Contains(Citizen item)
-        {
-            throw new NotImplementedException();
-        }
-
+        /// <summary>
+        /// Копіює ICollection в Array, починаючи з певного ындексу
+        /// </summary>
+        /// <param name="array"></param>
+        /// <param name="arrayIndex"></param>
         public void CopyTo(Citizen[] array, int arrayIndex)
-        {
-            throw new NotImplementedException();
-        }
+            => this.array.CopyTo(array, arrayIndex);
 
+        /// <summary>
+        /// Пошук індекса елемента по значенню
+        /// </summary>
+        /// <param name="item">значення</param>
+        /// <returns>індекс елемента, якщо нічого не знайдено то -1</returns>
         public int IndexOf(Citizen item)
         {
-            throw new NotImplementedException();
+            for (int i = 0; i < Count; i++)
+            {
+                if (item.Equals(array[i]))
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
+        /// <summary>
+        /// Перевірка наявності елемента в колекції
+        /// </summary>
+        /// <param name="item">значення</param>
+        /// <returns></returns>
+        public bool Contains(Citizen item)
+            => IndexOf(item) == -1;
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// Видалення елемента по індексу
+        /// </summary>
+        /// <param name="index">індекс</param>
+        public void RemoveAt(int index)
+        {
+            if ((0 <= index && index < Count) == false)
+            {
+                // вихід за межі
+                throw new Exception(outOfRange);
+            }
+
+            // Аналізує де знаходиться індекс видалення
+            if (0 <= index && index < CountR)   // пенсіонери
+            {
+                // корегуємо масив пенсіонерів
+                Array.Copy(arrayR, index + 1, arrayR, index, CountR-- - index + 1);
+                //TODO: Написати метод корекції масива
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="item"></param>
         public void Insert(int index, Citizen item)
         {
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
         public bool Remove(Citizen item)
         {
             throw new NotImplementedException();
         }
-
-        public void RemoveAt(int index)
-        {
-            throw new NotImplementedException();
-        }
-
-
     }
 }
