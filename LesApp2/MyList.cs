@@ -7,6 +7,18 @@ using System.Threading.Tasks;
 
 using LesApp2.People;
 
+// Примітка.
+// 1. "Удаление – с начала коллекции." тобто? - Що малося точно на увазі? 
+// Чом не можна скористатися RemoveAt(0)?
+// 2. "Возможно удаление с передачей экземпляра Гражданина" - тобто?
+// тобто витянути елемент? видалити із колекції і повернути вихідним параметром?
+// 3. "Метод Contains возвращает true/false при налчичии/отсутствии элемента 
+// в коллекции и номер в очереди." - для другого є метод IndexOf()
+// 4. Аналогічно 3-му? Чи необхідно реалізувати через dynamic? Тому що такого не
+// реалізують зазвичай
+// 3 і 4 - можна скористатисся кортежами і анонімними типами
+
+
 namespace LesApp2
 {
     /// <summary>
@@ -84,9 +96,11 @@ namespace LesApp2
 
         #region Exeption
         /// <summary>
-        /// Вихыд за межы масиву
+        /// Вихід за межі масиву
         /// </summary>
         string outOfRange = "\n\tСпроба вийти за межі масиву.";
+        string copyID = "\n\tСпроба повторно ввести наявний ID.";
+        string errorType = "\n\tСпроба ввести недопустимий тип.";
         #endregion
 
         /// <summary>
@@ -187,18 +201,43 @@ namespace LesApp2
                 return;
             }
 
+            #region Аналіз унікальності ID
+            // аналізуємо паспортні дані і можливість додавання елемента
+            // робимо вибірку даних паспортів по всіх громадянах
+            int[] baseID = array.Select(t => t.ID).ToArray();
+            int[] enterID = data.Select(t => t.ID).ToArray();
+
+            // аналізуэмо вхідний масив чи в ньому немає копій
+            // просто видалямо копії і порівнюємо кількість елементів
+            if (enterID.Distinct().ToArray().Length != enterID.Length)
+            {
+                throw new Exception(copyID);
+            }
+            
+            // на основі теорії множин робимо перетин (переріз) даних
+            int[] inter = baseID.Intersect(enterID).Select(t => t).ToArray();
+            // якщо довжина масиву більше  значить є копії
+            if (inter.Length > 0)
+            {
+                throw new Exception(copyID);
+            }
+            #endregion
+
             // Оскільки за умовою в нас 3 види громадян то пофільтруємо їх
 
+            #region обробка пенсіонерів
             // фільтр по пенсіонерам
             Citizen[] filter = data.Where(t => t.GetType() == typeof(Retiree))
-                .Select(t => t).ToArray();
+                    .Select(t => t).ToArray();
             // заносимо дані в масив пенсіонерів
             ChangeArray<Retiree>((Retiree[])filter, ref arrayR, ref countR);
             // аналіз і зміна єсності за потребою
             AnaliseSize<Citizen>(ref array, 0, CountR);
             // заносимо дані в спільний масив
             Array.Copy(arrayR, 0, array, 0, CountR);
+            #endregion
 
+            #region обробка робітників
             // фільтр по робітникам
             filter = data.Where(t => t.GetType() == typeof(Employee))
                 .Select(t => t).ToArray();
@@ -208,7 +247,9 @@ namespace LesApp2
             AnaliseSize<Citizen>(ref array, CountR, CountE);
             // заносимо дані в спільний масив
             Array.Copy(arrayE, 0, array, CountR, CountE);
+            #endregion
 
+            #region обробка студентів
             // фільтр по студентам
             filter = data.Where(t => t.GetType() == typeof(Student))
                 .Select(t => t).ToArray();
@@ -217,7 +258,8 @@ namespace LesApp2
             // аналіз і зміна єсності за потребою
             AnaliseSize<Citizen>(ref array, CountR + CountE, CountS);
             // заносимо дані в спільний масив
-            Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
+            Array.Copy(arrayS, 0, array, CountR + CountE, CountS); 
+            #endregion
         }
 
         /// <summary>
@@ -327,7 +369,6 @@ namespace LesApp2
             }
         }
 
-
         /// <summary>
         /// Копіює ICollection в Array, починаючи з певного ындексу
         /// </summary>
@@ -361,6 +402,51 @@ namespace LesApp2
         /// <returns></returns>
         public bool Contains(Citizen item)
             => IndexOf(item) == -1;
+
+        /// <summary>
+        /// Перевірка наявності елемента
+        /// </summary>
+        /// <typeparam name="T">int - повертає індекс першого елемента,
+        /// bool - вказує чи наявний елемент в колекції</typeparam>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public dynamic Contains<T>(Citizen item)
+        {
+            if (typeof(T) == typeof(bool))
+            {
+                return Contains(item);
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                return IndexOf(item);
+            }
+            else
+            {
+                throw new Exception(errorType);
+            }
+        }
+
+        /// <summary>
+        /// Перевірка наявності елемента, 
+        /// з одночасним виведенням через анонімний тип
+        /// умови наявності і позиції в масиві
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public dynamic ContainsAnon(Citizen item)
+            => new
+            {
+                Contain = Contains(item),
+                Number = IndexOf(item)
+            };
+
+        /// <summary>
+        /// Перевірка наявності елемента, з одночасним виведенням через кортеж
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public (bool contains, int number) ContainsTuple(Citizen item)
+            => (Contains(item), IndexOf(item));
 
         /// <summary>
         /// Видалення елемента по індексу
@@ -427,19 +513,75 @@ namespace LesApp2
             }
         }
 
-
-
-
-
+        /// <summary>
+        /// Видалення першого елемента колекції
+        /// </summary>
+        public void RemoveFirst()
+            => RemoveAt(0);
 
         /// <summary>
-        /// 
+        /// Видалення останнього елемента колекції
         /// </summary>
-        /// <param name="index"></param>
-        /// <param name="item"></param>
+        public void RemoveLast()
+            => RemoveAt(Count - 1);
+
+        /// <summary>
+        /// Витягування елемента - видалення з колекції і повернення його вихідним параметром
+        /// </summary>
+        /// <param name="index">індекс елемента</param>
+        /// <returns></returns>
+        public Citizen RemoveExtend(int index)
+        {
+            if ((0 <= index && index < Count) == false)
+            {
+                // вихід за межі
+                throw new Exception(outOfRange);
+            }
+
+            // кокпіювання елемента
+            Citizen temp = array[index];
+
+            // видалення елемента
+            RemoveAt(index);
+
+            // повернення елемнета
+            return temp;
+        }
+
+        /// <summary>
+        /// Повернути останній елемент
+        /// </summary>
+        /// <returns></returns>
+        public dynamic ReturnLast<T>()
+        {
+            // перевірка чи введений тип є типом який наслідує даний клас
+            if (typeof(T).IsSubclassOf(typeof(Citizen)) ||
+                typeof(T) == typeof(Citizen))
+            {
+                return array[Count - 1];
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                return Count - 1;
+            }
+            else
+            {
+                throw new Exception(errorType);
+            }
+        } 
+
+        /// <summary>
+        /// Вставка елемента в певну позицію, яка визначається індексом
+        /// </summary>
+        /// <param name="index">індекс вставки елемента</param>
+        /// <param name="item">елемент який необхідно вставити</param>
         public void Insert(int index, Citizen item)
         {
-            throw new NotImplementedException();
+            // якщо буде вказано індекс який рівняється кількості елементів
+            // тобто останній індекс + 1, то це вважатимето правильним заданням,
+            // так як не утворюється проміжку між елементами
+            
+            //TODO: доробити вставку
         }
 
     }

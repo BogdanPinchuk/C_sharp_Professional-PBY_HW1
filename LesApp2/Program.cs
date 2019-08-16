@@ -15,8 +15,9 @@ namespace LesApp2
             // Join Unicode
             Console.OutputEncoding = Encoding.Unicode;
 
-            
+            var kortej = (5, "Bohdan");
 
+            Console.WriteLine(kortej.GetType());
 
             // repeat
             DoExitOrRepeat();
