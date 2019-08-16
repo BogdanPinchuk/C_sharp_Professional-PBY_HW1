@@ -597,7 +597,7 @@ namespace LesApp2
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        public (Citizen element, int number) ReturnLastTuple(Citizen item)
+        public (Citizen element, int number) ReturnLastTuple()
             => (element: ReturnLast(), number: Count - 1);
 
 
