@@ -267,7 +267,7 @@ namespace LesApp2
         }
 
         /// <summary>
-        /// Аналіз і зміна розмірів масивe за необхідністю
+        /// Аналіз і зміна розмірів масива за необхідністю
         /// </summary>
         /// <typeparam name="T">Тип елементів</typeparam>
         /// <param name="array">вхідний масив</param>
@@ -362,13 +362,6 @@ namespace LesApp2
         public bool Contains(Citizen item)
             => IndexOf(item) == -1;
 
-
-
-
-
-
-
-
         /// <summary>
         /// Видалення елемента по індексу
         /// </summary>
@@ -386,9 +379,58 @@ namespace LesApp2
             {
                 // корегуємо масив пенсіонерів
                 Array.Copy(arrayR, index + 1, arrayR, index, CountR-- - index + 1);
-                //TODO: Написати метод корекції масива
+                // аналізує розмір і змінює за потребою (якщо багато пустих комірок,
+                // то для економії місця змінити масив з меншою ємністю)
+                AnaliseSize<Retiree>(ref arrayR, CountR, 0);
+            }
+            else if (CountR <= index && index < CountR + CountE)
+            {
+                // корегуємо масив робітників
+                Array.Copy(arrayE, (index - CountR) + 1, arrayE, index - CountR, 
+                    CountE-- - (index - CountR) + 1);
+                // зміна розмірів масиву
+                AnaliseSize<Employee>(ref arrayE, CountE, 0);
+            }
+            else if (CountR + CountE <= index && index < Count)
+            {
+                // корегуємо масив студентів
+                Array.Copy(arrayS, (index - (CountR + CountE)) + 1, arrayS, 
+                    index - (CountR + CountE), CountS-- - (index - (CountR + CountE)) + 1);
+                // зміна розмірів масиву
+                AnaliseSize<Student>(ref arrayS, CountS, 0);
+            }
+
+            // аналогічно AddRange() з'єднуємо масиви різних типів в один
+            Array.Copy(arrayR, 0, array, 0, CountR);
+            Array.Copy(arrayE, 0, array, CountR, CountE);
+            Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
+        }
+
+        /// <summary>
+        /// Видалення тільки першого елемента по вказаному значенню і повернення результату успішності
+        /// </summary>
+        /// <param name="item">значення</param>
+        /// <returns></returns>
+        public bool Remove(Citizen item)
+        {
+            // якщо використати змінну для індексу, то буде швидше виконання
+            int index = IndexOf(item);
+
+            if (index != -1)
+            {
+                RemoveAt(index);
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
+
+
+
+
+
 
         /// <summary>
         /// 
@@ -400,14 +442,5 @@ namespace LesApp2
             throw new NotImplementedException();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="item"></param>
-        /// <returns></returns>
-        public bool Remove(Citizen item)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
