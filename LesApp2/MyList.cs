@@ -446,7 +446,7 @@ namespace LesApp2
         /// <param name="item"></param>
         /// <returns></returns>
         public (bool contains, int number) ContainsTuple(Citizen item)
-            => (Contains(item), IndexOf(item));
+            => (contains: Contains(item), number: IndexOf(item));
 
         /// <summary>
         /// Видалення елемента по індексу
@@ -551,6 +551,8 @@ namespace LesApp2
         /// <summary>
         /// Повернути останній елемент
         /// </summary>
+        /// <typeparam name="T">int - повертає індекс останнього елемента,
+        /// Citizen або наслідники - повертає сам елемент</typeparam>
         /// <returns></returns>
         public dynamic ReturnLast<T>()
         {
@@ -568,7 +570,37 @@ namespace LesApp2
             {
                 throw new Exception(errorType);
             }
-        } 
+        }
+
+        /// <summary>
+        /// Повернути останній елемент
+        /// </summary>
+        /// <returns></returns>
+        public Citizen ReturnLast()
+            => array[Count - 1];
+
+        /// <summary>
+        /// Повернути останній елемент,
+        /// з одночасним виведенням через анонімний тип
+        /// самий елемент і позиції в масиві
+        /// </summary>
+        /// <returns></returns>
+        public dynamic ReturnLastAnon()
+            => new
+            {
+                Element = ReturnLast(),
+                Number = Count - 1
+            };
+
+        /// <summary>
+        /// Повернути останній елемент, з одночасним виведенням через кортеж
+        /// </summary>
+        /// <param name="item"></param>
+        /// <returns></returns>
+        public (Citizen element, int number) ReturnLastTuple(Citizen item)
+            => (element: ReturnLast(), number: Count - 1);
+
+
 
         /// <summary>
         /// Вставка елемента в певну позицію, яка визначається індексом
@@ -580,8 +612,10 @@ namespace LesApp2
             // якщо буде вказано індекс який рівняється кількості елементів
             // тобто останній індекс + 1, то це вважатимето правильним заданням,
             // так як не утворюється проміжку між елементами
-            
+
             //TODO: доробити вставку
+            //TODO: доробити ReturnLast
+
         }
 
     }
