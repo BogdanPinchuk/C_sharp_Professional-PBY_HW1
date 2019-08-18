@@ -15,7 +15,7 @@ namespace LesApp2
             // Join Unicode
             Console.OutputEncoding = Encoding.Unicode;
 
-#if true
+#if false
             // створення колекції
             MyList citizens = new MyList();
 
@@ -37,7 +37,7 @@ namespace LesApp2
                 }
             } 
 #endif
-#if false
+#if true
             Citizen[] citizen = new Retiree[]
                 {
                 new Retiree()
@@ -63,12 +63,12 @@ namespace LesApp2
             //{
             //    Console.WriteLine(i.ToString());
             //}
-            Console.WriteLine();
+            Console.WriteLine(retiree1[0].GetType());
             foreach (var i in citizen)
             {
                 Console.WriteLine(i.ToString());
             }
-            Console.WriteLine();
+            Console.WriteLine(citizen[0].GetType());
             foreach (var i in retiree1)
             {
                 Console.WriteLine(i.ToString());

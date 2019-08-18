@@ -14,11 +14,14 @@ namespace LesApp2.People
         /// <summary>
         /// Номер паспорта
         /// </summary>
-        public int ID { get; set; }
+        public virtual int ID { get; set; }
         /// <summary>
         /// ПІБ
         /// </summary>
-        public string FullName { get; set; }
+        public virtual string FullName { get; set; }
+
+        public Type GetTypeThis()
+            => this.GetType();
 
         public override string ToString()
             => "FullName: " + FullName + " ID: " + ID;

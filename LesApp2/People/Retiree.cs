@@ -11,5 +11,7 @@ namespace LesApp2.People
     /// </summary>
     class Retiree : Citizen
     {
+        public override string FullName { get => base.FullName; set => base.FullName = value; }
+        public override int ID { get => base.ID; set => base.ID = value; }
     }
 }
