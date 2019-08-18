@@ -43,6 +43,7 @@ namespace LesApp2
         /// </summary>
         Student[] arrayS = new Student[4];
 
+        #region Кількість внесених даних
         /// <summary>
         /// Змінні для свойств, які відображають кількість внесених елементів
         /// </summary>
@@ -76,7 +77,9 @@ namespace LesApp2
             get { return countS; }
             private set { countS = value; }
         }
+        #endregion
 
+        #region Ємності
         /// <summary>
         /// Ємність масиву громадян
         /// </summary>
@@ -93,16 +96,28 @@ namespace LesApp2
         /// Ємність масиву студентів
         /// </summary>
         public int CapacityS => arrayS.Length;
+        #endregion
 
         #region Exeption
         /// <summary>
         /// Вихід за межі масиву
         /// </summary>
         string outOfRange = "\n\tСпроба вийти за межі масиву.";
+        /// <summary>
+        /// Повторення ID
+        /// </summary>
         string copyID = "\n\tСпроба повторно ввести наявний ID.";
+        /// <summary>
+        /// Невірний введениий тип
+        /// </summary>
         string errorType = "\n\tСпроба ввести недопустимий тип.";
+        /// <summary>
+        /// Передача пустоти
+        /// </summary>
+        string nullData = "\n\tСпроба передати null.";
         #endregion
 
+        #region Enumerator
         /// <summary>
         /// Ітератор/енумератор
         /// </summary>
@@ -161,7 +176,7 @@ namespace LesApp2
             // скидання лічильника
             Reset();
             // TODO: Перевірити очищення значень Dispose()
-            // чистать дані
+            // чистить дані
             Clear();
         }
 
@@ -181,13 +196,83 @@ namespace LesApp2
                 return false;
             }
         }
+        #endregion
 
+        #region Add
         /// <summary>
         /// Додавання одного елемента
         /// </summary>
         /// <param name="item"></param>
         public void Add(Citizen item)
             => AddRange(item);
+
+        /// <summary>
+        /// Аналіз унікальності ID
+        /// </summary>
+        /// <param name="data">Масив вхідних елементів</param>
+        private void UniqueElement(params Citizen[] data)
+        {
+            #region Перевірка вимкнена по причині пришвидшення роботи, дану конструкцію можна вкл. при розширенні функціоналу
+#if false
+            // перевірка чи не пусті вхідні параметри
+            if (data.Length < 1)
+            {
+                // так як в методі AddRange це реалізовано,
+                // а в Insert в будь якому випадку буде 1 елемент
+                // в даному випадку можливо будуть подальші реалізації,
+                // то краще залишити дану перевірку
+                return;
+            } 
+#endif 
+            #endregion
+
+            // аналізуємо паспортні дані і можливість додавання елемента
+            // робимо вибірку даних паспортів по всіх громадянах
+            int[] baseID = default,
+                enterID = default;
+
+            if (Count > 0)
+            {
+                baseID = array.Select(t => t.ID).ToArray();
+            }
+            else
+            {
+                return;
+            }
+
+            if (data.Length > 0)
+            {
+                enterID = data.Select(t => t.ID).ToArray();
+            }
+            else
+            {
+                return;
+            }
+
+            // аналіз на null
+            foreach (var i in data)
+            {
+                if (i == null)
+                {
+                    throw new Exception(nullData);
+                }
+            }
+
+            // аналізуэмо вхідний масив чи в ньому немає копій
+            // просто видалямо копії і порівнюємо кількість елементів
+            if (enterID.Distinct().ToArray().Length != enterID.Length)
+            {
+                throw new Exception(copyID);
+            }
+
+            // на основі теорії множин робимо перетин (переріз) даних
+            int[] inter = baseID.Intersect(enterID).Select(t => t).ToArray();
+            // якщо довжина масиву більше  значить є копії
+            if (inter.Length > 0)
+            {
+                throw new Exception(copyID);
+            }
+        }
 
         /// <summary>
         /// Додавання масиву елеменів
@@ -201,38 +286,20 @@ namespace LesApp2
                 return;
             }
 
-            #region Аналіз унікальності ID
-            // аналізуємо паспортні дані і можливість додавання елемента
-            // робимо вибірку даних паспортів по всіх громадянах
-            int[] baseID = array.Select(t => t.ID).ToArray();
-            int[] enterID = data.Select(t => t.ID).ToArray();
-
-            // аналізуэмо вхідний масив чи в ньому немає копій
-            // просто видалямо копії і порівнюємо кількість елементів
-            if (enterID.Distinct().ToArray().Length != enterID.Length)
-            {
-                throw new Exception(copyID);
-            }
-            
-            // на основі теорії множин робимо перетин (переріз) даних
-            int[] inter = baseID.Intersect(enterID).Select(t => t).ToArray();
-            // якщо довжина масиву більше  значить є копії
-            if (inter.Length > 0)
-            {
-                throw new Exception(copyID);
-            }
-            #endregion
+            // Аналіз унікальності ID
+            UniqueElement(data);
 
             // Оскільки за умовою в нас 3 види громадян то пофільтруємо їх
 
             #region обробка пенсіонерів
+
             // фільтр по пенсіонерам
             Citizen[] filter = data.Where(t => t.GetType() == typeof(Retiree))
                     .Select(t => t).ToArray();
             // заносимо дані в масив пенсіонерів
-            ChangeArray<Retiree>((Retiree[])filter, ref arrayR, ref countR);
+            ChangeArray<Retiree>((Retiree[])filter, ref arrayR, ref countR, CountR);
             // аналіз і зміна єсності за потребою
-            AnaliseSize<Citizen>(ref array, 0, CountR);
+            AnaliseSize<Citizen>(ref array, Count, filter.Length);
             // заносимо дані в спільний масив
             Array.Copy(arrayR, 0, array, 0, CountR);
             #endregion
@@ -242,9 +309,9 @@ namespace LesApp2
             filter = data.Where(t => t.GetType() == typeof(Employee))
                 .Select(t => t).ToArray();
             // заносимо дані в масив робітників
-            ChangeArray<Employee>((Employee[])filter, ref arrayE, ref countE);
+            ChangeArray<Employee>((Employee[])filter, ref arrayE, ref countE, CountE);
             // аналіз і зміна єсності за потребою
-            AnaliseSize<Citizen>(ref array, CountR, CountE);
+            AnaliseSize<Citizen>(ref array, Count, filter.Length);
             // заносимо дані в спільний масив
             Array.Copy(arrayE, 0, array, CountR, CountE);
             #endregion
@@ -254,13 +321,14 @@ namespace LesApp2
             filter = data.Where(t => t.GetType() == typeof(Student))
                 .Select(t => t).ToArray();
             // заносимо дані в масив студентів
-            ChangeArray<Student>((Student[])filter, ref arrayS, ref countS);
+            ChangeArray<Student>((Student[])filter, ref arrayS, ref countS, CountS);
             // аналіз і зміна єсності за потребою
-            AnaliseSize<Citizen>(ref array, CountR + CountE, CountS);
+            AnaliseSize<Citizen>(ref array, Count, filter.Length);
             // заносимо дані в спільний масив
-            Array.Copy(arrayS, 0, array, CountR + CountE, CountS); 
+            Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
             #endregion
         }
+        #endregion
 
         /// <summary>
         /// Присвоєння даних відповідному масиву
@@ -270,7 +338,8 @@ namespace LesApp2
         /// <param name="baseArray">Внутрішній масив даних</param>
         /// <param name="count">Кількість елементів базового масиву</param>
         /// <param name="capacity">Ємність базового масиву</param>
-        private void ChangeArray<T>(T[] inputArray, ref T[] baseArray, ref int count)
+        /// <param name="index">Індекс вставки елемента в масив</param>
+        private void ChangeArray<T>(T[] inputArray, ref T[] baseArray, ref int count, int index)
         {
             // перевірка чи не пустий масив передається для присвоєння
             if (inputArray.Length < 1)
@@ -281,11 +350,28 @@ namespace LesApp2
             // аналіз розмірів і зміна ємності при необхідності
             AnaliseSize<T>(ref baseArray, count, inputArray.Length);
 
-            // додавання нових елементів
+            // перевірка парвильності діапазону
+            if ((0 <= index && index <= count) == false)
+            {
+                throw new Exception(outOfRange);
+            }
+
+            #region Додавання нових елементів
+            // зміна внутрішньої структурри масива (роздвигання)
+            Array.Copy(baseArray, index, baseArray, index + 1, count - index - 1);
+            // вставка елементів
+            Array.Copy(inputArray, 0, baseArray, index, inputArray.Length);
+            // зміна індексу
+            count += inputArray.Length;
+            #endregion
+
+            // TODO: поміняти на CopyTo
+#if false
             for (int i = 0; i < inputArray.Length; i++)
             {
                 baseArray[count++] = inputArray[i];
-            }
+            } 
+#endif
         }
 
         /// <summary>
@@ -334,7 +420,9 @@ namespace LesApp2
             int power = (int)Math.Ceiling(
                 Math.Log(ownCount + newCount) / Math.Log(2));
 
-            if (ownCount + newCount >= array.Length)
+            if (ownCount + newCount >= array.Length ||      // при додаванні елементів
+                (ownCount + newCount < array.Length / 2 &&  // при видаленні елементів
+                array.Length >= 4))                         // щоб не було падіння нижче ємності в 4 елементи
             {
                 Resize<T>((int)Math.Pow(2, power), ownCount, ref array);
             }
@@ -361,16 +449,26 @@ namespace LesApp2
             {
                 if (0 <= index && index < Count)
                 {
-                    array[index] = value;
+                    // перевірка правильності типу який замінюється
+                    if (array[index].GetType().Equals(value.GetType()))
+                    {
+                        array[index] = value;
+                    }
+                    else
+                    {
+                        throw new Exception(errorType);
+                    }
                 }
-
-                // вихід за межі
-                throw new Exception(outOfRange);
+                else
+                {
+                    // вихід за межі
+                    throw new Exception(outOfRange);
+                }
             }
         }
 
         /// <summary>
-        /// Копіює ICollection в Array, починаючи з певного ындексу
+        /// Копіює ICollection в Array, починаючи з певного індексу
         /// </summary>
         /// <param name="array"></param>
         /// <param name="arrayIndex"></param>
@@ -395,6 +493,7 @@ namespace LesApp2
             return -1;
         }
 
+        #region Contains
         /// <summary>
         /// Перевірка наявності елемента в колекції
         /// </summary>
@@ -447,7 +546,9 @@ namespace LesApp2
         /// <returns></returns>
         public (bool contains, int number) ContainsTuple(Citizen item)
             => (contains: Contains(item), number: IndexOf(item));
+        #endregion
 
+        #region Remove
         /// <summary>
         /// Видалення елемента по індексу
         /// </summary>
@@ -469,18 +570,18 @@ namespace LesApp2
                 // то для економії місця змінити масив з меншою ємністю)
                 AnaliseSize<Retiree>(ref arrayR, CountR, 0);
             }
-            else if (CountR <= index && index < CountR + CountE)
+            else if (CountR <= index && index < CountR + CountE)    // робітники
             {
                 // корегуємо масив робітників
-                Array.Copy(arrayE, (index - CountR) + 1, arrayE, index - CountR, 
+                Array.Copy(arrayE, (index - CountR) + 1, arrayE, index - CountR,
                     CountE-- - (index - CountR) + 1);
                 // зміна розмірів масиву
                 AnaliseSize<Employee>(ref arrayE, CountE, 0);
             }
-            else if (CountR + CountE <= index && index < Count)
+            else if (CountR + CountE <= index && index < Count)     // студенти
             {
                 // корегуємо масив студентів
-                Array.Copy(arrayS, (index - (CountR + CountE)) + 1, arrayS, 
+                Array.Copy(arrayS, (index - (CountR + CountE)) + 1, arrayS,
                     index - (CountR + CountE), CountS-- - (index - (CountR + CountE)) + 1);
                 // зміна розмірів масиву
                 AnaliseSize<Student>(ref arrayS, CountS, 0);
@@ -490,6 +591,9 @@ namespace LesApp2
             Array.Copy(arrayR, 0, array, 0, CountR);
             Array.Copy(arrayE, 0, array, CountR, CountE);
             Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
+
+            // оновлюємо розміри спільного масиву
+            AnaliseSize<Citizen>(ref array, Count, 0);
         }
 
         /// <summary>
@@ -547,7 +651,9 @@ namespace LesApp2
             // повернення елемнета
             return temp;
         }
+        #endregion
 
+        #region ReturnLast
         /// <summary>
         /// Повернути останній елемент
         /// </summary>
@@ -599,8 +705,7 @@ namespace LesApp2
         /// <returns></returns>
         public (Citizen element, int number) ReturnLastTuple()
             => (element: ReturnLast(), number: Count - 1);
-
-
+        #endregion
 
         /// <summary>
         /// Вставка елемента в певну позицію, яка визначається індексом
@@ -613,9 +718,80 @@ namespace LesApp2
             // тобто останній індекс + 1, то це вважатимето правильним заданням,
             // так як не утворюється проміжку між елементами
 
-            //TODO: доробити вставку
-            //TODO: доробити ReturnLast
+            if ((0 <= index && index <= Count) == false)
+            {
+                // вихід за межі
+                throw new Exception(outOfRange);
+            }
 
+            // так як дана структура строго отсортована по типам громадян,
+            // то в будь яке місце вставити будь кого неможна, тому обумовимось,
+            // якщо тип що вставляється попадає в межі собі подібних типів, то
+            // елемент вставляється у вказане місце, якщо ж ні, то аналізується
+            // раніше чи пізніше собі подібних типів зроблений запит на вставку,
+            // якщо раніше, то даний елемент вставляється в діапазон собі подібних
+            // на перше  місце, а якщо  пізніше, то в цінець
+
+            // Аналіз унікальності ID
+            UniqueElement(item);
+
+            // Аналізує де знаходиться індекс вставки відносно свого типу і його переприсвоєння
+            if (typeof(Retiree).Equals(item.GetType())) // пернсіонери
+            {
+                // аналіз розташування індекса відносно свого типу і переприсвоєння
+                if (index > CountR)
+                {
+                    index = CountR;
+                }
+
+                // заносимо дані в масив пенсіонерів
+                ChangeArray<Retiree>(new Retiree[] { (Retiree)item }, ref arrayR, ref countR, index);
+            }
+            else if (typeof(Employee).Equals(item.GetType()))   // робітники
+            {
+                if (index < CountR)
+                {
+                    index = 0;
+                }
+                else if (CountR <= index && index <= CountR + CountE)
+                {
+                    index -= CountR;
+                }
+                else if (index > CountR + CountE)
+                {
+                    index = CountE;
+                }
+
+                // заносимо дані в масив робітників
+                ChangeArray<Employee>(new Employee[] { (Employee)item }, ref arrayE, ref countE, index);
+            }
+            else if (typeof(Student).Equals(item.GetType()))    // студенти
+            {
+                if (index < CountR + CountE)
+                {
+                    index = 0;
+                }
+                else if (CountR + CountE <= index && index <= Count)
+                {
+                    index -= CountR + CountE;
+                }
+                else if (index > Count)
+                {
+                    index = CountS;
+                }
+
+                // заносимо дані в масив студентів
+                ChangeArray<Student>(new Student[] { (Student)item }, ref arrayS, ref countS, index);
+            }
+
+            // аналогічно AddRange() з'єднуємо масиви різних типів в один
+            Array.Copy(arrayR, 0, array, 0, CountR);
+            Array.Copy(arrayE, 0, array, CountR, CountE);
+            Array.Copy(arrayS, 0, array, CountR + CountE, CountS);
+
+            // оновлюємо розміри спільного масиву
+            AnaliseSize<Citizen>(ref array, Count, 0);
+            // TODO: Протестити занесення даних null
         }
 
     }
