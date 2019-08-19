@@ -11,7 +11,30 @@ namespace LesApp2.People
     /// </summary>
     class Retiree : Citizen
     {
-        public override string FullName { get => base.FullName; set => base.FullName = value; }
-        public override int ID { get => base.ID; set => base.ID = value; }
+        #region Чомусь не працює
+#if false
+        public static explicit operator Retiree[] (Citizen[] array)
+        {
+            Retiree[] tempArray = new Retiree[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                tempArray[i] = (Retiree)array[i];
+            }
+
+            return tempArray;
+        }
+
+        public static explicit operator Citizen[] (Retiree[] array)
+        {
+            Citizen[] tempArray = new Citizen[array.Length];
+            for (int i = 0; i < array.Length; i++)
+            {
+                tempArray[i] = (Citizen)array[i];
+            }
+
+            return tempArray;
+        } 
+#endif 
+        #endregion
     }
 }
